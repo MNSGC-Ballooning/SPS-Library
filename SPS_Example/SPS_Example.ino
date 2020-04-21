@@ -1,11 +1,11 @@
 #include <SPS.h>                                        //Include the library!
-
+      
 #define SPS_SERIAL Serial1
 
 #define logRate 4000                                          //Establish a log rate
 
-//SPS SpsA(&SPS_SERIAL);                                //Serial SPS - This is the only difference in operation between the two
-SPS SpsA(Wire,I2C_PINS_18_19);                          //I2C SPS
+SPS SpsA(&SPS_SERIAL);                                //Serial SPS - This is the only difference in operation between the two
+//SPS SpsA(Wire,I2C_PINS_18_19);                          //I2C SPS
 
 unsigned long prevTime = 0;                          
 
@@ -15,8 +15,8 @@ void setup() {
   delay (100);
   Serial.println("Serial active!");
   
-//  SPS_SERIAL.begin(115200);                                   //SPS serial initialization
-//  delay(1000);                                                //Delay to ensure connection, can be much shorter
+  SPS_SERIAL.begin(115200);                                   //SPS serial initialization
+  delay(1000);                                                //Delay to ensure connection, can be much shorter
 
   SpsA.initOPC();                                             //Initialize the SPS sensor
   Serial.println("SPS active!");

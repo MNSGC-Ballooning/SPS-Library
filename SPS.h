@@ -18,7 +18,12 @@ can record new data every 1 seconds.
 
 #include <arduino.h>
 #include <Stream.h>
+
+#define MODE 0x00														//Set the mode of the SPS in advance- to have I2C settings available,
+#ifdef MODE == 0x01														//change mode to 0x01.
 #include <i2c_t3.h>
+#define I2C_MODE
+#endif
 
 #define SPS_ADDRESS 0x69
 
@@ -53,11 +58,13 @@ class SPS: public OPC
 	private:
 	bool altCleaned = false;											//The boolean for altitude based fan clean operation
 	bool iicSystem = false;												//Indication of i2c or serial system 
+
+#ifdef I2C_MODE
 	i2c_t3 *SPSWire;													//Local wire bus
 	i2c_pins SPSpins;													//Local wire pins
 	uint8_t	CalcCrc(uint8_t data[2]);									//SPS wire checksum calculation
 	bool dataReady();													//data indicator
-	
+#endif	
 	
 	public:
 	struct SPS30data {													//struct for SPS30 data
@@ -66,7 +73,10 @@ class SPS: public OPC
 		float aver;		
 	}SPSdata;
 
+#ifdef I2C_MODE
 	SPS(i2c_t3 wireBus, i2c_pins pins);									//I2C Constructor
+#endif
+
 	SPS(Stream* ser);													//Serial Constructor
 	void powerOn();														//System commands for SPS
 	void powerOff();

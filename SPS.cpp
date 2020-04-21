@@ -50,10 +50,6 @@ String OPC::logReadout(String name){return "";}
 
 bool OPC::readData(){ return false; }
 
-void OPC::getData(float dataPtr[], unsigned int arrayFill){}
-
-void OPC::getData(float dataPtr[], unsigned int arrayFill, unsigned int arrayStart){}
-
 void OPC::powerOn(){}
 
 void OPC::powerOff(){}
@@ -71,13 +67,14 @@ uint16_t OPC::bytes2int(byte LSB, byte MSB){							//Two byte conversion to inte
 
 
 
-
+#ifdef I2C_MODE
 SPS::SPS(i2c_t3 wireBus, i2c_pins pins) : OPC()							//I2C constructor for SPS object
 {
 	SPSWire = &wireBus;
 	SPSpins = pins;
 	iicSystem = true;
 }
+#endif
 
 SPS::SPS(Stream* ser) : OPC(ser) {}										//Initialize stream using base OPC constructor
 
@@ -97,6 +94,7 @@ void SPS::powerOn()                                			            //SPS Power on
 		for (unsigned int q = 0; q<7; q++) s->read();                   //Read the response bytes
 		
 	} else {															//If the system is running I2C...
+	#ifdef I2C_MODE
 		byte data[2] = {0x03,0x00};										//Data to write to set proper mode
 		SPSWire->beginTransmission(SPS_ADDRESS);
 		SPSWire->write(0x0010);											//Set Pointer
@@ -104,6 +102,7 @@ void SPS::powerOn()                                			            //SPS Power on
 		SPSWire->write(data[1]);
 		SPSWire->write(CalcCrc(data));									//Every two bytes requires a checksum
 		SPSWire->endTransmission();
+	#endif
 	}
 }
 
@@ -120,9 +119,11 @@ void SPS::powerOff()                              		                //SPS Power 
 		delay(100);
 		for (unsigned int q = 0; q<7; q++) s->read();                   //Read the response bytes
 	} else {															//If the system is running I2C...
+		#ifdef I2C_MODE
 		SPSWire->beginTransmission(SPS_ADDRESS);
 		SPSWire->write(0x0104);											//Set Pointer
 		SPSWire->endTransmission();
+		#endif
 	}
 }
 
@@ -139,9 +140,11 @@ void SPS::clean()                                		                //SPS Power o
 		delay(100); 
 		for (unsigned int q = 0; q<7; q++) s->read();                   //Read the response bytes
 	} else {															//If the system is running I2C...
+		#ifdef I2C_MODE
 		SPSWire->beginTransmission(SPS_ADDRESS);
 		SPSWire->write(0x5607);											//Set Pointer
 		SPSWire->endTransmission();
+		#endif
 	}
 }
 
@@ -149,8 +152,11 @@ void SPS::initOPC()                            			  		        //SPS initializati
 {
 	OPC::initOPC();														//Calls original init
 	
-	if(iicSystem) SPSWire->begin(I2C_MASTER,0x69,SPSpins,I2C_PULLUP_EXT,I2C_RATE_100); //Begin the wire if I2C with required specifications
-	
+	if(iicSystem){
+		 #ifdef I2C_MODE
+		 SPSWire->begin(I2C_MASTER,0x69,SPSpins,I2C_PULLUP_EXT,I2C_RATE_100); //Begin the wire if I2C with required specifications
+		 #endif
+	}
 	powerOn();                                       	            	//Sends SPS active measurement command
 	delay(100);
 	clean();															//clean to start. This does nothing if attached to the pump
@@ -306,7 +312,7 @@ bool SPS::readData(){
 		for(unsigned short j = 0; j<5; j++){                            //This will populate the system information array with the data returned by the                  
 			systemInfo[j] = s->read();                                  //by the system about the request. This is not the actual data, but will provide
 			if (j != 0) checksum += systemInfo[j];                      //information about the data. The information is also added to the checksum.
-	
+	    }
 
 		if (systemInfo[3] != (byte)0x00){                               //If the system indicates a malfunction of any kind, the data request will fail.
 		 for (unsigned short j = 0; j<60; j++) data = s->read();        //Any data that populates the main array will be thrown out to prevent future corruption.
@@ -348,6 +354,7 @@ bool SPS::readData(){
 		}
   
 	} else {															//If the SPS is configured in I2C mode
+		#ifdef I2C_MODE
 		if(dataReady()){												//Check if data is available to pull
 			SPSWire->beginTransmission(SPS_ADDRESS);
 			SPSWire->write(0x0202);										//Set Pointer
@@ -371,12 +378,16 @@ bool SPS::readData(){
 				buffers[i++] = data[1];
 			}		
 		}else return false;												//If the data is not available to pull, the data read failed.
+		#else
+		return false
+		#endif
 	}  
 	
 	memcpy((void *)&SPSdata, (void *)buffers, 40);						//Copy the data to the struct
-	return true;                   
+	return true;   
 }
 
+#ifdef I2C_MODE
 bool SPS::dataReady(){													//Check if the SPS is ready to send measurement data
 	SPSWire->beginTransmission(SPS_ADDRESS);
 	SPSWire->write(0x0202);												//Set Pointer
@@ -411,3 +422,4 @@ uint8_t SPS::CalcCrc(uint8_t data[2]) {									//Calculate the two byte checksu
 	}
 	return crc;
 }
+#endif
