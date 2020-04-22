@@ -94,6 +94,7 @@ Data from the first 30 seconds of powering on the sensors will not be reliable.
 
 All OPC:
  - construct with a reference to the serial port name (&serialName), and separately begin the serial connection.
+		- By default, I2C mode is disabled. To enable the I2C communication option, enter the SPS.h file, and uncomment the define macro for I2C_MODE
 		- For I2C communication, construct with an I2C port name and pins (Wire#,I2C_PINS_##_##). You will not need to begin the wire connection.
 		- Note that the I2C_PINS_##_## is a enumerated class within i2c_t3 that allows for use of alternate wire pins. Simply input the numbers of the pins
 		  used, starting with the lower pin. For example, for Wire0 (or just Wire) on a Teensy 3.5/3.6 on the default pins, use I2C_PINS_18_19

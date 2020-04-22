@@ -19,10 +19,10 @@ can record new data every 1 seconds.
 #include <arduino.h>
 #include <Stream.h>
 
-#define MODE 0x00														//Set the mode of the SPS in advance- to have I2C settings available,
-#ifdef MODE == 0x01														//change mode to 0x01.
+//#define I2C_MODE														//Uncomment this line to engage the SPS I2C option. This will clash with
+																		//libraries that use Wire or twoWire instead of i2c_t3
+#ifdef I2C_MODE
 #include <i2c_t3.h>
-#define I2C_MODE
 #endif
 
 #define SPS_ADDRESS 0x69

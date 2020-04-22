@@ -379,7 +379,7 @@ bool SPS::readData(){
 			}		
 		}else return false;												//If the data is not available to pull, the data read failed.
 		#else
-		return false
+		return false;
 		#endif
 	}  
 	
