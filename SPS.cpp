@@ -298,14 +298,28 @@ bool SPS::readData(){
 		s->write(0xFC);
 		s->write(0x7E);
 
-		if (! s->available()) return false;                             //If the given serial connection is not available, the data request will fail.
-
+		if (! s->available()){
+//			 Serial.println("Bad connection!");
+			 return false;                            					 //If the given serial connection is not available, the data request will fail.
+		}
+		
+/*		Serial.println();
+		for (int i = 0; i < 47; i++){
+			Serial.print(s->read(),HEX);
+			Serial.print(", ");
+		}
+		Serial.println();
+*/		
 		if (s->peek() != 0x7E){                                         //If the sent start byte is not as expected, the data request will fail.
-		 for (unsigned short j = 0; j<60; j++) data = s->read();        //The data buffer will be wiped to ensure the next data pull isn't corrupt.
+		 for (unsigned short j = 0; j<60; j++){
+		  data = s->read();   											//The data buffer will be wiped to ensure the next data pull isn't corrupt.
+		}
+//		 Serial.println("Bad start byte!");
 		 return false;
 		}
 
 		if (s->available() < 47){                                       //If there are not enough data bytes available, the data request will fail. This
+//		Serial.println("Bad packet!");
 		return false;                                                   //will not clear the data buffer, because the system is still trying to fill it.
 		}
 
@@ -316,6 +330,7 @@ bool SPS::readData(){
 
 		if (systemInfo[3] != (byte)0x00){                               //If the system indicates a malfunction of any kind, the data request will fail.
 		 for (unsigned short j = 0; j<60; j++) data = s->read();        //Any data that populates the main array will be thrown out to prevent future corruption.
+//		 Serial.println("Bad data!");
 		 return false;
 		}
 
@@ -342,6 +357,7 @@ bool SPS::readData(){
 		if (data != 0x7E){                                              //If the end byte is bad, the data request will fail.
 		   for (unsigned short j = 0; j<60; j++) data = s->read();      //At this point, there likely isn't data to throw out. However,
 		   data = 0;                                                    //The removal is completed as a redundant measure to prevent corruption.
+//		   Serial.println("Bad end byte!");
 		   return false;
 		}
 
@@ -350,10 +366,12 @@ bool SPS::readData(){
 
 		if (checksum != SPSChecksum){                                   //If the checksums are not equal, the data request will fail.  
 		  for (unsigned short j = 0; j<60; j++) data = s->read();       //Just to be certain, any remaining data is thrown out to prevent corruption.
+//		  Serial.println("Bad checksum!");
 		  return false;
 		}
   
 	} else {															//If the SPS is configured in I2C mode
+//		Serial.println("UHHHHH DONT BE HERE BUCKAROO");
 		#ifdef I2C_MODE
 		if(dataReady()){												//Check if data is available to pull
 			SPSWire->beginTransmission(SPS_ADDRESS);
@@ -379,6 +397,7 @@ bool SPS::readData(){
 			}		
 		}else return false;												//If the data is not available to pull, the data read failed.
 		#else
+//		Serial.println("Bad system ID!");
 		return false;
 		#endif
 	}  
