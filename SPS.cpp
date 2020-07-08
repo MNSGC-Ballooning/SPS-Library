@@ -236,6 +236,8 @@ String SPS::logReadout(String name){
 	Serial.println(String(nTot));
 	Serial.print("Last log time: ");
 	Serial.println(String(lastLog));
+	Serial.print("Fan Status: ");
+	Serial.println(String(getFanStatus()));
 	Serial.println();
 	Serial.print(".3 to .5 microns per cubic cm: ");
 	Serial.println(String(SPSdata.nums[0],6));
@@ -264,6 +266,8 @@ String SPS::logReadout(String name){
 	 Serial.println(String(nTot));
 	 Serial.print("Last log time: ");
 	 Serial.println(String(lastLog));
+	 Serial.print("Fan Status: ");
+	 Serial.println(String(getFanStatus()));
 	 Serial.println();
 	 Serial.println("Bad log");
 	 Serial.println("=======================");	 
@@ -299,27 +303,20 @@ bool SPS::readData(){
 		s->write(0x7E);
 
 		if (! s->available()){
-//			 Serial.println("Bad connection!");
+		//	 Serial.println("Bad connection!");
 			 return false;                            					 //If the given serial connection is not available, the data request will fail.
 		}
 		
-/*		Serial.println();
-		for (int i = 0; i < 47; i++){
-			Serial.print(s->read(),HEX);
-			Serial.print(", ");
-		}
-		Serial.println();
-*/		
 		if (s->peek() != 0x7E){                                         //If the sent start byte is not as expected, the data request will fail.
 		 for (unsigned short j = 0; j<60; j++){
 		  data = s->read();   											//The data buffer will be wiped to ensure the next data pull isn't corrupt.
 		}
-//		 Serial.println("Bad start byte!");
+		// Serial.println("Bad start byte!");
 		 return false;
 		}
 
 		if (s->available() < 47){                                       //If there are not enough data bytes available, the data request will fail. This
-//		Serial.println("Bad packet!");
+		//Serial.println("Bad packet!");
 		return false;                                                   //will not clear the data buffer, because the system is still trying to fill it.
 		}
 
@@ -328,10 +325,17 @@ bool SPS::readData(){
 			if (j != 0) checksum += systemInfo[j];                      //information about the data. The information is also added to the checksum.
 	    }
 
-		if (systemInfo[3] != (byte)0x00){                               //If the system indicates a malfunction of any kind, the data request will fail.
-		 for (unsigned short j = 0; j<60; j++) data = s->read();        //Any data that populates the main array will be thrown out to prevent future corruption.
-//		 Serial.println("Bad data!");
-		 return false;
+		if (systemInfo[3] != (byte)0x00){         						//If the system indicates a malfunction of any kind, the data request will fail.
+		 if (systemInfo[3] == (byte)0x80){
+			 fanActive = false;
+		 } else {
+			for (unsigned short j = 0; j<60; j++) data = s->read();        //Any data that populates the main array will be thrown out to prevent future corruption.
+			//Serial.print("Bad data! ");
+			//Serial.println(systemInfo[3],HEX);
+			return false;
+			}
+		} else {
+			fanActive = true;
 		}
 
 		byte stuffByte = 0;
@@ -357,7 +361,7 @@ bool SPS::readData(){
 		if (data != 0x7E){                                              //If the end byte is bad, the data request will fail.
 		   for (unsigned short j = 0; j<60; j++) data = s->read();      //At this point, there likely isn't data to throw out. However,
 		   data = 0;                                                    //The removal is completed as a redundant measure to prevent corruption.
-//		   Serial.println("Bad end byte!");
+		  // Serial.println("Bad end byte!");
 		   return false;
 		}
 
@@ -366,7 +370,7 @@ bool SPS::readData(){
 
 		if (checksum != SPSChecksum){                                   //If the checksums are not equal, the data request will fail.  
 		  for (unsigned short j = 0; j<60; j++) data = s->read();       //Just to be certain, any remaining data is thrown out to prevent corruption.
-//		  Serial.println("Bad checksum!");
+		//  Serial.println("Bad checksum!");
 		  return false;
 		}
   
@@ -442,3 +446,7 @@ uint8_t SPS::CalcCrc(uint8_t data[2]) {									//Calculate the two byte checksu
 	return crc;
 }
 #endif
+
+bool SPS::getFanStatus(){
+	return fanActive;
+}

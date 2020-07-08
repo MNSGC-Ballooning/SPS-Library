@@ -58,6 +58,7 @@ class SPS: public OPC
 	private:
 	bool altCleaned = false;											//The boolean for altitude based fan clean operation
 	bool iicSystem = false;												//Indication of i2c or serial system 
+	bool fanActive = true;
 
 #ifdef I2C_MODE
 	i2c_t3 *SPSWire;													//Local wire bus
@@ -86,6 +87,7 @@ class SPS: public OPC
 	String logUpdate();													//Returns the CSV string of SPS data
 	String logReadout(String name);										//Log update, but with a nice serial print
 	bool readData();													//data reader- generally controlled internally
+	bool getFanStatus();												//Check to see if the fan is on
 };
 
 #endif
