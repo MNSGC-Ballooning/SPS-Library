@@ -12,5 +12,6 @@ setReset	KEYWORD2
 powerOn	KEYWORD2
 powerOff	KEYWORD2
 clean	KEYWORD2
+getFanStatus	KEYWORD2
 SPS30data KEYWORD3
 

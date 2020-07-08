@@ -112,3 +112,4 @@ All OPC:
 
 SPS:
 - .clean() - used to clean the system using the internal fan. (void) (called by initOPC)
+- .getFanStatus() - will return a bool indicating whether or not the fan is active
